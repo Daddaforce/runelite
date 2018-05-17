@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.grandexchangeaverage;
 
 import com.google.inject.Inject;
+import java.text.NumberFormat;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
@@ -87,7 +88,7 @@ class GrandExchangeAverageOfferWindow
 
 		String newText = defaultText +
 				"<br>" +
-				"Actively traded price: " + itemPrice;
+				"Actively traded price: " + NumberFormat.getInstance().format(itemPrice);
 
 		widgetGrandExchangeOfferText.setText(newText);
 	}

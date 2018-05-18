@@ -84,7 +84,7 @@ class BankTitle
 		if (widgetBankTitleBar == null ||
 				widgetBankTitleBar.isHidden() ||
 				widgetBankTitleBar.getText().contains("Showing") ||
-				widgetBankTitleBar.getText().contains("("))
+				widgetBankTitleBar.getText().contains("~"))
 		{
 			return;
 		}
@@ -93,12 +93,12 @@ class BankTitle
 
 		if (config.showGE() && gePrice != 0)
 		{
-			strCurrentTab += " ( " + NumberFormat.getInstance().format(gePrice) + " gp )"; //StackFormatter.quantityToStackSize
+			strCurrentTab += " ~ " + NumberFormat.getInstance().format(gePrice) + " gp";
 		}
 
 		if (config.showHA() && haPrice != 0)
 		{
-			strCurrentTab += " ( " + NumberFormat.getInstance().format(haPrice) + " gp (HighAlch) )";
+			strCurrentTab += " ~ " + NumberFormat.getInstance().format(haPrice) + " gp";
 		}
 
 		log.debug("Setting bank title: {}", bankTitle + strCurrentTab);

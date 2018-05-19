@@ -26,6 +26,7 @@ package net.runelite.client.plugins.bankvalue;
 
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import java.text.NumberFormat;
 import net.runelite.api.Client;
 import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
@@ -83,7 +84,7 @@ class BankTitle
 		if (widgetBankTitleBar == null ||
 				widgetBankTitleBar.isHidden() ||
 				widgetBankTitleBar.getText().contains("Showing") ||
-				widgetBankTitleBar.getText().contains("("))
+				widgetBankTitleBar.getText().contains("~"))
 		{
 			return;
 		}
@@ -92,12 +93,12 @@ class BankTitle
 
 		if (config.showGE() && gePrice != 0)
 		{
-			strCurrentTab += " (EX: " + StackFormatter.quantityToStackSize(gePrice) + ")";
+			strCurrentTab += " ~ " + NumberFormat.getInstance().format(gePrice) + " gp";
 		}
 
 		if (config.showHA() && haPrice != 0)
 		{
-			strCurrentTab += " (HA: " + StackFormatter.quantityToStackSize(haPrice) + ")";
+			strCurrentTab += " ~ " + NumberFormat.getInstance().format(haPrice) + " gp";
 		}
 
 		log.debug("Setting bank title: {}", bankTitle + strCurrentTab);

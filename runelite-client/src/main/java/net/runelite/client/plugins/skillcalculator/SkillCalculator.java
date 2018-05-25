@@ -36,7 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -48,6 +47,7 @@ import net.runelite.client.plugins.skillcalculator.beans.SkillData;
 import net.runelite.client.plugins.skillcalculator.beans.SkillDataBonus;
 import net.runelite.client.plugins.skillcalculator.beans.SkillDataEntry;
 import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.DynamicGridLayout;
 import net.runelite.client.ui.FontManager;
 
 class SkillCalculator extends JPanel
@@ -80,7 +80,7 @@ class SkillCalculator extends JPanel
 		this.client = client;
 		this.uiInput = uiInput;
 
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		setLayout(new DynamicGridLayout(0, 1, 0, 5));
 
 		// Register listeners on the input fields and then move on to the next related text field
 		uiInput.uiFieldCurrentLevel.addActionListener(e ->
@@ -124,8 +124,6 @@ class SkillCalculator extends JPanel
 
 		// Create action slots for the skill actions.
 		renderActionSlots();
-
-		add(Box.createRigidArea(new Dimension(0, 15)));
 
 		// Update the input fields.
 		updateInputFields();
@@ -172,12 +170,12 @@ class SkillCalculator extends JPanel
 
 	private void renderBonusOptions()
 	{
-		if (skillData.bonuses != null)
+		if (skillData.getBonuses() != null)
 		{
-			for (SkillDataBonus bonus : skillData.bonuses)
+			for (SkillDataBonus bonus : skillData.getBonuses())
 			{
 				JPanel uiOption = new JPanel(new BorderLayout());
-				JLabel uiLabel = new JLabel(bonus.name);
+				JLabel uiLabel = new JLabel(bonus.getName());
 				JCheckBox uiCheckbox = new JCheckBox();
 
 				uiLabel.setForeground(Color.WHITE);
@@ -187,7 +185,7 @@ class SkillCalculator extends JPanel
 				uiOption.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 				// Adjust XP bonus depending on check-state of the boxes.
-				uiCheckbox.addActionListener(e -> adjustXPBonus(uiCheckbox.isSelected(), bonus.value));
+				uiCheckbox.addActionListener(e -> adjustXPBonus(uiCheckbox.isSelected(), bonus.getValue()));
 				uiCheckbox.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
 
 				uiOption.add(uiLabel, BorderLayout.WEST);
@@ -205,12 +203,10 @@ class SkillCalculator extends JPanel
 		uiActionSlots.clear();
 
 		// Create new components for the action slots.
-		for (SkillDataEntry action : skillData.actions)
+		for (SkillDataEntry action : skillData.getActions())
 		{
 			UIActionSlot slot = new UIActionSlot(action);
 			uiActionSlots.add(slot); // Keep our own reference.
-
-			add(Box.createRigidArea(new Dimension(0, 5)));
 			add(slot); // Add component to the panel.
 
 			slot.addMouseListener(new MouseAdapter()
@@ -243,13 +239,13 @@ class SkillCalculator extends JPanel
 		{
 			int actionCount = 0;
 			int neededXP = targetXP - currentXP;
-			double xp = slot.action.xp * xpFactor;
+			double xp = (slot.action.isIgnoreBonus()) ? slot.action.getXp() : slot.action.getXp() * xpFactor;
 
 			if (neededXP > 0)
 				actionCount = (int) Math.ceil(neededXP / xp);
 
-			slot.setText("Lvl. " + slot.action.level + " (" + formatXPActionString(xp, actionCount, "exp) - "));
-			slot.setAvailable(currentLevel >= slot.action.level);
+			slot.setText("Lvl. " + slot.action.getLevel() + " (" + formatXPActionString(xp, actionCount, "exp) - "));
+			slot.setAvailable(currentLevel >= slot.action.getLevel());
 			slot.value = xp;
 		}
 	}

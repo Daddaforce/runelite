@@ -33,23 +33,23 @@ import java.util.concurrent.ScheduledExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import static net.runelite.client.game.ItemManager.EMPTY;
 import static net.runelite.client.game.ItemManager.NONE;
+import net.runelite.http.api.item.ItemClient;
 import net.runelite.http.api.item.ItemPrice;
-import javax.annotation.Nonnull;
 
 @Slf4j
 class ItemPriceLoader extends CacheLoader<Integer, ItemPrice>
 {
 	private final ListeningExecutorService executorService;
-	private final ItemManager manager;
+	private final ItemClient client;
 
-	ItemPriceLoader(ScheduledExecutorService executor, ItemManager manager)
+	ItemPriceLoader(ScheduledExecutorService executor, ItemClient client)
 	{
 		this.executorService = MoreExecutors.listeningDecorator(executor);
-		this.manager = manager;
+		this.client = client;
 	}
 
 	@Override
-	public ItemPrice load(@Nonnull Integer key)
+	public ItemPrice load(Integer key) throws Exception
 	{
 		// guava's Cache doesn't support null values
 		return EMPTY;
@@ -67,8 +67,12 @@ class ItemPriceLoader extends CacheLoader<Integer, ItemPrice>
 	{
 		try
 		{
-			final ItemPrice itemPrice = manager.toMappedPrice(key);
-			return itemPrice == null ? NONE : itemPrice;
+			ItemPrice itemPrice = client.lookupItemPrice(key);
+			if (itemPrice == null)
+			{
+				return NONE;
+			}
+			return itemPrice;
 		}
 		catch (IOException ex)
 		{

@@ -34,10 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,8 +49,6 @@ import net.runelite.api.ItemComposition;
 import net.runelite.api.SpritePixels;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.callback.ClientThread;
-import static net.runelite.client.game.ItemMapping.map;
-import net.runelite.http.api.item.Item;
 import net.runelite.http.api.item.ItemClient;
 import net.runelite.http.api.item.ItemPrice;
 import net.runelite.http.api.item.SearchResult;
@@ -101,7 +95,7 @@ public class ItemManager
 		itemPriceCache = CacheBuilder.newBuilder()
 			.maximumSize(1024L)
 			.expireAfterAccess(1, TimeUnit.HOURS)
-			.build(new ItemPriceLoader(executor, ItemManager.this));
+			.build(new ItemPriceLoader(executor, itemClient));
 
 		itemSearches = CacheBuilder.newBuilder()
 			.maximumSize(512L)
@@ -157,6 +151,8 @@ public class ItemManager
 	 */
 	public ItemPrice getItemPriceAsync(int itemId)
 	{
+		itemId = ItemMapping.mapFirst(itemId);
+
 		ItemPrice itemPrice = itemPriceCache.getIfPresent(itemId);
 		if (itemPrice != null && itemPrice != EMPTY)
 		{
@@ -168,6 +164,25 @@ public class ItemManager
 	}
 
 	/**
+	 * Look up an item's price from the price cache
+	 *
+	 * @param itemId
+	 * @return
+	 */
+	public ItemPrice getCachedItemPrice(int itemId)
+	{
+		itemId = ItemMapping.mapFirst(itemId);
+
+		ItemPrice itemPrice = itemPriceCache.getIfPresent(itemId);
+		if (itemPrice != null && itemPrice != EMPTY && itemPrice != NONE)
+		{
+			return itemPrice;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Look up bulk item prices asynchronously
 	 *
 	 * @param itemIds array of item Ids
@@ -175,23 +190,23 @@ public class ItemManager
 	 */
 	public CompletableFuture<ItemPrice[]> getItemPriceBatch(Collection<Integer> itemIds)
 	{
-		final ArrayList<Integer> lookup = new ArrayList<>();
+		final List<Integer> lookup = new ArrayList<>();
 		final List<ItemPrice> existing = new ArrayList<>();
-
 		for (int itemId : itemIds)
 		{
-			final ItemPrice itemPrice = itemPriceCache.getIfPresent(itemId);
-
-			if (itemPrice != null)
+			for (int mappedItemId : ItemMapping.map(itemId))
 			{
-				existing.add(itemPrice);
-			}
-			else
-			{
-				lookup.add(itemId);
+				ItemPrice itemPrice = itemPriceCache.getIfPresent(mappedItemId);
+				if (itemPrice != null)
+				{
+					existing.add(itemPrice);
+				}
+				else
+				{
+					lookup.add(mappedItemId);
+				}
 			}
 		}
-
 		// All cached?
 		if (lookup.isEmpty())
 		{
@@ -199,31 +214,27 @@ public class ItemManager
 		}
 
 		final CompletableFuture<ItemPrice[]> future = new CompletableFuture<>();
-
 		scheduledExecutorService.execute(() ->
 		{
 			try
 			{
 				// Do a query for the items not in the cache
-				final ItemPrice[] itemPrices = toMappedPrices(lookup.toArray(new Integer[lookup.size()]));
-
+				ItemPrice[] itemPrices = itemClient.lookupItemPrice(lookup.toArray(new Integer[lookup.size()]));
+				for (int itemId : lookup)
+				{
+					itemPriceCache.put(itemId, NONE);
+				}
 				if (itemPrices != null)
 				{
-					for (int itemId : lookup)
-					{
-						itemPriceCache.put(itemId, NONE);
-					}
 					for (ItemPrice itemPrice : itemPrices)
 					{
 						itemPriceCache.put(itemPrice.getItem().getId(), itemPrice);
 					}
 					// Append these to the already cached items
-					existing.addAll(Arrays.asList(itemPrices));
+					Arrays.stream(itemPrices).forEach(existing::add);
 				}
-
 				future.complete(existing.toArray(new ItemPrice[existing.size()]));
 			}
-
 			catch (Exception ex)
 			{
 				// cache unable to lookup
@@ -247,13 +258,15 @@ public class ItemManager
 	 */
 	public ItemPrice getItemPrice(int itemId) throws IOException
 	{
+		itemId = ItemMapping.mapFirst(itemId);
+
 		ItemPrice itemPrice = itemPriceCache.getIfPresent(itemId);
 		if (itemPrice != null && itemPrice != EMPTY)
 		{
 			return itemPrice == NONE ? null : itemPrice;
 		}
 
-		itemPrice = toMappedPrice(itemId);
+		itemPrice = itemClient.lookupItemPrice(itemId);
 		if (itemPrice == null)
 		{
 			itemPriceCache.put(itemId, NONE);
@@ -353,89 +366,4 @@ public class ItemManager
 			return null;
 		}
 	}
-
-	/**
-	 * Converts item id to item price, mapping untradeables when necessary
-	 * @param itemId item id
-	 * @return mapped item price
-	 * @throws IOException exception when item is not found
-	 */
-	ItemPrice toMappedPrice(int itemId) throws IOException
-	{
-		final Collection<Integer> map = map(itemId);
-		final ItemPrice[] itemPrices = itemClient.lookupItemPrice(map.toArray(new Integer[map.size()]));
-
-		if (itemPrices == null)
-		{
-			return null;
-		}
-
-		int sum = 0;
-
-		for (final ItemPrice itemPrice : itemPrices)
-		{
-			if (itemPrice != null)
-			{
-				sum += itemPrice.getPrice();
-			}
-		}
-
-		final Item item = new Item();
-		item.setId(itemId);
-
-		final ItemPrice itemPrice = new ItemPrice();
-		itemPrice.setItem(item);
-		itemPrice.setPrice(sum);
-		return itemPrice;
-	}
-
-	/**
-	 * Converts set of item ids to set of item prices, mapping untradeables when necessary
-	 * @param itemIds item ids
-	 * @return mapped item prices
-	 * @throws IOException exception when item is not found
-	 */
-	private ItemPrice[] toMappedPrices(Integer... itemIds) throws IOException
-	{
-		if (itemIds.length == 0)
-			{
-				return null;
-			}
-
-		final Map<Integer, Collection<Integer>> itemMap = new HashMap<>();
-			final Set<Integer> allItems = new HashSet<>();
-
-			for (final int itemId : itemIds)
-			{
-				final Collection<Integer> map = map(itemId);
-				itemMap.put(itemId, map);
-				allItems.addAll(map);
-			}
-
-			final ItemPrice[] itemPrices = itemClient.lookupItemPrice(allItems.toArray(new Integer[allItems.size()]));
-			final List<ItemPrice> resultPrices = new ArrayList<>();
-
-			itemMap.forEach((key, value) ->
-			{
-				final Item item = new Item();
-				item.setId(key);
-
-				int sum = 0;
-				for (final ItemPrice itemPrice : itemPrices)
-				{
-					if (itemPrice != null && value.contains(itemPrice.getItem().getId()))
-					{
-						sum += itemPrice.getPrice();
-					}
-				}
-
-				final ItemPrice itemPrice = new ItemPrice();
-				itemPrice.setItem(item);
-				itemPrice.setPrice(sum);
-				resultPrices.add(itemPrice);
-			});
-
-			return resultPrices.toArray(new ItemPrice[itemIds.length]);
-	}
-
 }

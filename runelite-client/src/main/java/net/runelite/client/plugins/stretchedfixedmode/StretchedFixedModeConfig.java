@@ -56,7 +56,7 @@ public interface StretchedFixedModeConfig extends Config
 		return false;
 	}
 
-	@ConfigItem(
+/*	@ConfigItem(
 		keyName = "integerScaling",
 		name = "Integer Scaling",
 		description = "Forces use of a whole number scale factor"
@@ -64,5 +64,5 @@ public interface StretchedFixedModeConfig extends Config
 	default boolean integerScaling()
 	{
 		return false;
-	}
+	}*/
 }

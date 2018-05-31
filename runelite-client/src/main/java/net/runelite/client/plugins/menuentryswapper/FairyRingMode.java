@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Seth <https://github.com/sethtroll>
+ * Copyright (c) 2018, Ethan <http://github.com/shmeeps>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,49 +22,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.grandexchange;
+package net.runelite.client.plugins.menuentryswapper;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@ConfigGroup(
-	keyName = "grandexchange",
-	name = "Grand Exchange",
-	description = "Configuration for the Grand Exchange"
-)
-public interface GrandExchangeConfig extends Config
+@Getter
+@RequiredArgsConstructor
+public enum FairyRingMode
 {
-	@ConfigItem(
-		position = 1,
-		keyName = "quickLookup",
-		name = "Hotkey lookup (Alt + Left click)",
-		description = "Configures whether to enable the hotkey lookup for ge searches"
-	)
-	default boolean quickLookup()
-	{
-		return true;
-	}
+	ZANARIS("Zanaris"),
+	LAST_DESTINATION("Last-Destination"),
+	CONFIGURE("Configure");
 
-	@ConfigItem(
-		position = 2,
-		keyName = "enableNotifications",
-		name = "Enable Notifications",
-		description = "Configures whether to enable notifications when an offer updates"
-	)
-	default boolean enableNotifications()
-	{
-		return true;
-	}
+	private final String name;
 
-	@ConfigItem(
-		position = 3,
-		keyName = "notificationDelay",
-		name = "Notification Delay",
-		description = "Number of seconds between notifications on offer updates"
-	)
-	default int notificationDelay()
+	@Override
+	public String toString()
 	{
-		return 5;
+		return name;
 	}
 }

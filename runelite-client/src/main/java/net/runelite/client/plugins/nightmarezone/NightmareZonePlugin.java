@@ -26,7 +26,6 @@ package net.runelite.client.plugins.nightmarezone;
 
 import com.google.common.eventbus.Subscribe;
 import com.google.inject.Provides;
-import java.util.Arrays;
 import javax.inject.Inject;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -34,11 +33,13 @@ import net.runelite.api.Varbits;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ConfigChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.Notifier;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.ui.overlay.Overlay;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.Text;
 
 @PluginDescriptor(
@@ -46,13 +47,14 @@ import net.runelite.client.util.Text;
 )
 public class NightmareZonePlugin extends Plugin
 {
-	private static final int[] NMZ_MAP_REGION = {9033};
-
 	@Inject
 	private Notifier notifier;
 
 	@Inject
 	private Client client;
+
+	@Inject
+	private OverlayManager overlayManager;
 
 	@Inject
 	private NightmareZoneConfig config;
@@ -65,8 +67,16 @@ public class NightmareZonePlugin extends Plugin
 	private boolean absorptionNotificationSend = true;
 
 	@Override
-	protected void shutDown()
+	protected void startUp() throws Exception
 	{
+		overlayManager.add(overlay);
+		overlay.removeAbsorptionCounter();
+	}
+
+	@Override
+	protected void shutDown() throws Exception
+	{
+		overlayManager.remove(overlay);
 		overlay.removeAbsorptionCounter();
 	}
 
@@ -80,12 +90,6 @@ public class NightmareZonePlugin extends Plugin
 	NightmareZoneConfig getConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(NightmareZoneConfig.class);
-	}
-
-	@Override
-	public Overlay getOverlay()
-	{
-		return overlay;
 	}
 
 	@Subscribe
@@ -170,8 +174,9 @@ public class NightmareZonePlugin extends Plugin
 		}
 	}
 
-	public boolean isInNightmareZone()
+	boolean isInNightmareZone()
 	{
-		return Arrays.equals(client.getMapRegions(), NMZ_MAP_REGION);
+		Widget nmz = client.getWidget(WidgetInfo.NIGHTMARE_ZONE);
+		return nmz != null && !nmz.isSelfHidden();
 	}
 }

@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.Set;
 import static net.runelite.api.ObjectID.*;
+import static net.runelite.api.NullObjectID.*;
 
 public class Obstacles
 {
@@ -110,8 +111,8 @@ public class Obstacles
 		STEPPING_STONE_16466,
 		// Vine east of Shilo Village
 		NULL_26884, NULL_26886,
-		// Stepping stones east of Shilo Village (does not work)
-		NULL_23465, NULL_23466, NULL_23467,
+		// Stepping stones east of Shilo Village
+		STEPPING_STONES, STEPPING_STONES_23646, STEPPING_STONES_23647,
 		// Middle of Karamja
 		A_WOODEN_LOG,
 		// Slayer Tower

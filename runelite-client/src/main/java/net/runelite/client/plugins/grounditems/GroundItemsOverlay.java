@@ -29,11 +29,12 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import net.runelite.api.Client;
@@ -48,6 +49,7 @@ import net.runelite.client.plugins.grounditems.config.PriceDisplayMode;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
+import net.runelite.client.ui.overlay.OverlayUtil;
 import net.runelite.client.ui.overlay.components.BackgroundComponent;
 import net.runelite.client.ui.overlay.components.TextComponent;
 import net.runelite.client.util.StackFormatter;
@@ -77,7 +79,7 @@ public class GroundItemsOverlay extends Overlay
 	private final ItemManager itemManager;
 
 	@Inject
-	public GroundItemsOverlay(Client client, GroundItemsPlugin plugin, GroundItemsConfig config, ItemManager itemManager)
+	private GroundItemsOverlay(Client client, GroundItemsPlugin plugin, GroundItemsConfig config, ItemManager itemManager)
 	{
 		setPosition(OverlayPosition.DYNAMIC);
 		setLayer(OverlayLayer.ABOVE_SCENE);
@@ -90,7 +92,9 @@ public class GroundItemsOverlay extends Overlay
 	@Override
 	public Dimension render(Graphics2D graphics)
 	{
-		if (!plugin.isHotKeyPressed() && config.itemHighlightMode() == MENU)
+		final boolean dontShowOverlay = config.itemHighlightMode() == MENU && !plugin.isHotKeyPressed();
+
+		if (dontShowOverlay && !config.highlightTiles())
 		{
 			return null;
 		}
@@ -108,11 +112,14 @@ public class GroundItemsOverlay extends Overlay
 		offsetMap.clear();
 		final LocalPoint localLocation = player.getLocalLocation();
 		final Point mousePos = client.getMouseCanvasPosition();
-		final List<GroundItem> groundItemList = new ArrayList<>(plugin.getCollectedGroundItems().values());
+		Collection<GroundItem> groundItemList = plugin.getCollectedGroundItems().values();
 		GroundItem topGroundItem = null;
 
 		if (plugin.isHotKeyPressed())
 		{
+			// Make copy of ground items because we are going to modify them here, and the array list supports our
+			// desired behaviour here
+			groundItemList = new ArrayList<>(groundItemList);
 			final java.awt.Point awtMousePos = new java.awt.Point(mousePos.getX(), mousePos.getY());
 			GroundItem groundItem = null;
 
@@ -171,7 +178,7 @@ public class GroundItemsOverlay extends Overlay
 			}
 
 			// Update GE price for item
-			final ItemPrice itemPrice = itemManager.getItemPriceAsync(item.getItemId());
+			final ItemPrice itemPrice = itemManager.getItemPrice(item.getItemId());
 
 			if (itemPrice != null && itemPrice.getPrice() > 0)
 			{
@@ -197,6 +204,22 @@ public class GroundItemsOverlay extends Overlay
 			}
 
 			final Color color = plugin.getItemColor(highlighted, hidden);
+
+			if (config.highlightTiles())
+			{
+				final Polygon poly = Perspective.getCanvasTilePoly(client, groundPoint);
+
+				if (poly != null)
+				{
+					OverlayUtil.renderPolygon(graphics, poly, color);
+				}
+			}
+
+			if (dontShowOverlay)
+			{
+				continue;
+			}
+
 			itemStringBuilder.append(item.getName());
 
 			if (item.getQuantity() > 1)
@@ -208,8 +231,8 @@ public class GroundItemsOverlay extends Overlay
 				else
 				{
 					itemStringBuilder.append(" (")
-							.append(StackFormatter.quantityToStackSize(item.getQuantity()))
-							.append(")");
+						.append(StackFormatter.quantityToStackSize(item.getQuantity()))
+						.append(")");
 				}
 			}
 
@@ -280,7 +303,7 @@ public class GroundItemsOverlay extends Overlay
 				// Hidden box
 				x += width + 2;
 				y = textY - (RECTANGLE_SIZE + stringHeight) / 2;
-				width = height = RECTANGLE_SIZE - 2;
+				width = height = RECTANGLE_SIZE;
 				final Rectangle itemHiddenBox = new Rectangle(x, y, width, height);
 
 				// Highlight box

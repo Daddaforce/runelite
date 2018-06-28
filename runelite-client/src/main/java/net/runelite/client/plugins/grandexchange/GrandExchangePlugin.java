@@ -317,7 +317,7 @@ public class GrandExchangePlugin extends Plugin
 					return;
 				}
 
-				final String text = geText.getText() + "<br>OSBuddy Actively traded price: " + StackFormatter.formatNumber(result.getOverall_average());
+				final String text = geText.getText() + "<br>Actively traded price: " + StackFormatter.formatNumber(result.getOverall_average());
 				geText.setText(text);
 			}
 			catch (IOException e)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
+ * Copyright (c) 2018, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.rs.api;
+package net.runelite.api.events;
 
-import net.runelite.api.Region;
+import lombok.Value;
+import net.runelite.api.Item;
 import net.runelite.api.Tile;
-import net.runelite.mapping.Import;
 
-public interface RSRegion extends Region
+/**
+ * Called when an item pile despawns from the ground. When the client loads a new scene,
+ * all item piles are implicitly despawned, and despawn events will not be sent.
+ */
+@Value
+public class ItemDespawned
 {
-	@Import("objects")
-	RSGameObject[] getObjects();
-
-	@Import("tiles")
-	@Override
-	Tile[][][] getTiles();
-
-	@Import("drawTile")
-	void drawTile(int[] pixels, int pixelOffset, int width, int z, int x, int y);
+	private final Tile tile;
+	private final Item item;
 }

@@ -36,7 +36,7 @@ package net.runelite.api.widgets;
  */
 public class WidgetID
 {
-	public static final int FAIRY_RING_CODE_GROUP_ID = 381;
+	public static final int FAIRY_RING_PANEL_GROUP_ID = 381;
 	public static final int FAIRY_RING_GROUP_ID = 398;
 	public static final int LOGOUT_PANEL_ID = 182;
 	public static final int BANK_GROUP_ID = 12;
@@ -91,7 +91,8 @@ public class WidgetID
 	public static final int BLAST_FURNACE_GROUP_ID = 474;
 	public static final int WORLD_MAP_GROUP_ID = 595;
 	public static final int PYRAMID_PLUNDER_GROUP_ID = 428;
-	public static final int RAIDS_REWARD_GROUP_ID = 539;
+	public static final int CHAMBERS_OF_XERIC_REWARD_GROUP_ID = 539;
+	public static final int THEATRE_OF_BLOOD_REWARD_GROUP_ID = 23;
 	public static final int EXPERIENCE_TRACKER_GROUP_ID = 122;
 	public static final int TITHE_FARM_GROUP_ID = 241;
 	public static final int KINGDOM_GROUP_ID = 392;
@@ -104,6 +105,7 @@ public class WidgetID
 	public static final int CORP_DAMAGE = 13;
 	public static final int DESTROY_ITEM_GROUP_ID = 584;
 	public static final int VARROCK_MUSEUM_QUIZ_GROUP_ID = 533;
+	public static final int KILL_LOGS_GROUP_ID = 549;
 
 	static class WorldMap
 	{
@@ -119,10 +121,10 @@ public class WidgetID
 
 	static class DialogNPC
 	{
-		static final int HEAD_MODEL = 0;
-		static final int NAME = 1;
-		static final int CONTINUE = 2;
-		static final int TEXT = 3;
+		static final int HEAD_MODEL = 1;
+		static final int NAME = 2;
+		static final int CONTINUE = 3;
+		static final int TEXT = 4;
 	}
 
 	static class LogoutPanel
@@ -451,8 +453,8 @@ public class WidgetID
 
 	static class LevelUp
 	{
-		static final int SKILL = 0;
-		static final int LEVEL = 1;
+		static final int SKILL = 1;
+		static final int LEVEL = 2;
 	}
 
 	static class QuestCompleted
@@ -498,14 +500,23 @@ public class WidgetID
 
 	static class DialogSprite
 	{
-		static final int SPRITE = 0;
-		static final int TEXT = 1;
+		static final int SPRITE = 1;
+		static final int TEXT = 2;
 	}
 
 	static class ExperienceTracker
 	{
 		static final int WIDGET = 1;
 		static final int BOTTOM_BAR = 14;
+	}
+
+	static class FairyRingPanel
+	{
+		static final int HEADER = 2;
+		static final int LIST = 7;
+		static final int FAVORITES = 8;
+		static final int SEPARATOR = 9;
+		static final int SCROLLBAR = 152;
 	}
 
 	static class FairyRing
@@ -550,5 +561,13 @@ public class WidgetID
 		static final int VARROCK_MUSEUM_FIRST_ANSWER = 29;
 		static final int VARROCK_MUSEUM_SECOND_ANSWER = 30;
 		static final int VARROCK_MUSEUM_THIRD_ANSWER = 31;
+	}
+
+	static class KillLog
+	{
+		static final int TITLE = 3;
+		static final int MONSTER = 13;
+		static final int KILLS = 14;
+		static final int STREAK = 15;
 	}
 }

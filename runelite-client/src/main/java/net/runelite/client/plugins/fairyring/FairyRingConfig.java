@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
+ * Copyright (c) 2018 Abex
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,19 +22,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.api;
+package net.runelite.client.plugins.fairyring;
 
-/**
- * Represents a region of chunks.
- * <p>
- * A region is an area that contains 8x8 chunks on the map.
- */
-public interface Region
+import net.runelite.client.config.Config;
+import net.runelite.client.config.ConfigGroup;
+import net.runelite.client.config.ConfigItem;
+
+@ConfigGroup("fairyrings")
+public interface FairyRingConfig extends Config
 {
-	/**
-	 * Gets the tiles in this region.
-	 *
-	 * @return the regions tile
-	 */
-	Tile[][][] getTiles();
+	@ConfigItem(
+		keyName = "autoOpen",
+		name = "Open search automatically",
+		description = "Open the search widget every time you enter a fairy ring"
+	)
+	default boolean autoOpen()
+	{
+		return true;
+	}
 }

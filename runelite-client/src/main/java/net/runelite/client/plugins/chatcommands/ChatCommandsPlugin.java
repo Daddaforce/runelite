@@ -42,11 +42,17 @@ import net.runelite.api.GameState;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.MessageNode;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.SetMessage;
+import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.vars.AccountType;
+import net.runelite.api.widgets.Widget;
+import static net.runelite.api.widgets.WidgetID.KILL_LOGS_GROUP_ID;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
+import net.runelite.client.chat.ChatboxInputListener;
 import net.runelite.client.chat.CommandManager;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.events.ChatboxInput;
@@ -72,14 +78,18 @@ import net.runelite.http.api.kc.KillCountClient;
 	tags = {"grand", "exchange", "level", "prices"}
 )
 @Slf4j
-public class ChatCommandsPlugin extends Plugin
+public class ChatCommandsPlugin extends Plugin implements ChatboxInputListener
 {
 	private static final float HIGH_ALCHEMY_CONSTANT = 0.6f;
-	private static final Pattern KILLCOUNT_PATERN = Pattern.compile("Your ([a-zA-Z ]+) kill count is: <col=ff0000>(\\d+)</col>.");
+	private static final Pattern KILLCOUNT_PATERN = Pattern.compile("Your (.+) kill count is: <col=ff0000>(\\d+)</col>.");
+	private static final Pattern RAIDS_PATTERN = Pattern.compile("Your completed (.+) count is: <col=ff0000>(\\d+)</col>.");
 	private static final Pattern WINTERTODT_PATERN = Pattern.compile("Your subdued Wintertodt count is: <col=ff0000>(\\d+)</col>.");
+	private static final Pattern BARROWS_PATERN = Pattern.compile("Your Barrows chest count is: <col=ff0000>(\\d+)</col>.");
 
 	private final HiscoreClient hiscoreClient = new HiscoreClient();
 	private final KillCountClient killCountClient = new KillCountClient();
+
+	private boolean logKills;
 
 	@Inject
 	private Client client;
@@ -112,12 +122,14 @@ public class ChatCommandsPlugin extends Plugin
 	public void startUp()
 	{
 		keyManager.registerKeyListener(chatKeyboardListener);
+		commandManager.register(this);
 	}
 
 	@Override
 	public void shutDown()
 	{
 		keyManager.unregisterKeyListener(chatKeyboardListener);
+		commandManager.unregister(this);
 	}
 
 	@Provides
@@ -235,15 +247,82 @@ public class ChatCommandsPlugin extends Plugin
 
 			setKc("Wintertodt", kc);
 		}
+
+		matcher = RAIDS_PATTERN.matcher(message);
+		if (matcher.find())
+		{
+			String boss = matcher.group(1);
+			int kc = Integer.parseInt(matcher.group(2));
+
+			setKc(boss, kc);
+		}
+
+		matcher = BARROWS_PATERN.matcher(message);
+		if (matcher.find())
+		{
+			int kc = Integer.parseInt(matcher.group(1));
+
+			setKc("Barrows", kc);
+		}
 	}
 
 	@Subscribe
-	public void onChatboxInput(ChatboxInput chatboxInput)
+	public void onGameTick(GameTick event)
+	{
+		if (!logKills)
+		{
+			return;
+		}
+
+		logKills = false;
+
+		Widget title = client.getWidget(WidgetInfo.KILL_LOG_TITLE);
+		Widget bossMonster = client.getWidget(WidgetInfo.KILL_LOG_MONSTER);
+		Widget bossKills = client.getWidget(WidgetInfo.KILL_LOG_KILLS);
+
+		if (title == null || bossMonster == null || bossKills == null
+			|| !"Boss Kill Log".equals(title.getText()))
+		{
+			return;
+		}
+
+		Widget[] bossChildren = bossMonster.getChildren();
+		Widget[] killsChildren = bossKills.getChildren();
+
+		for (int i = 0; i < bossChildren.length; ++i)
+		{
+			Widget boss = bossChildren[i];
+			Widget kill = killsChildren[i];
+
+			String bossName = boss.getText();
+			int kc = Integer.parseInt(kill.getText().replace(",", ""));
+			if (kc != getKc(bossName))
+			{
+				setKc(bossName, kc);
+			}
+		}
+	}
+
+	@Subscribe
+	public void onWidgetLoaded(WidgetLoaded widget)
+	{
+		// don't load kc if in an instance, if the player is in another players poh
+		// and reading their boss log
+		if (widget.getGroupId() != KILL_LOGS_GROUP_ID || client.isInInstancedRegion())
+		{
+			return;
+		}
+
+		logKills = true;
+	}
+
+	@Override
+	public boolean onChatboxInput(ChatboxInput chatboxInput)
 	{
 		final String value = chatboxInput.getValue();
 		if (!value.startsWith("!kc ") && !value.startsWith("/!kc "))
 		{
-			return;
+			return false;
 		}
 
 		int idx = value.indexOf(' ');
@@ -252,10 +331,9 @@ public class ChatCommandsPlugin extends Plugin
 		final int kc = getKc(boss);
 		if (kc <= 0)
 		{
-			return;
+			return false;
 		}
 
-		chatboxInput.setStop(true);
 		final String playerName = client.getLocalPlayer().getName();
 
 		executor.execute(() ->
@@ -273,6 +351,8 @@ public class ChatCommandsPlugin extends Plugin
 				chatboxInput.resume();
 			}
 		});
+
+		return true;
 	}
 
 	private void killCountLookup(ChatMessageType type, SetMessage setMessage, String search)

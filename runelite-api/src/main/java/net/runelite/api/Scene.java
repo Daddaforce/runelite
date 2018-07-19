@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Tomas Slusny <slusnucky@gmail.com>
+ * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -22,21 +22,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.google.common.eventbus;
-
-import com.google.common.util.concurrent.MoreExecutors;
+package net.runelite.api;
 
 /**
- * An {@link EventBus} dispatches events to subscribers immediately as they're posted without using an
- * intermediate queue to change the dispatch order.
+ * Represents the entire 3D scene
  */
-public class ImmediateEventBus extends EventBus
+public interface Scene
 {
 	/**
-	 * Creates a new ImmediateEventBus with the given {@code identifier}.
+	 * Gets the tiles in the scene
+	 *
+	 * @return the tiles in [plane][x][y]
 	 */
-	public ImmediateEventBus(SubscriberExceptionHandler exceptionHandler)
-	{
-		super("default", MoreExecutors.directExecutor(), Dispatcher.immediate(), exceptionHandler);
-	}
+	Tile[][][] getTiles();
 }

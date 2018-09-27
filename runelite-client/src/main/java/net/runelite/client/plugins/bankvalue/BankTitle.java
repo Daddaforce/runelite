@@ -31,8 +31,6 @@ import net.runelite.api.widgets.Widget;
 import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.util.StackFormatter;
 
-import java.text.NumberFormat;
-
 @Slf4j
 class BankTitle
 {

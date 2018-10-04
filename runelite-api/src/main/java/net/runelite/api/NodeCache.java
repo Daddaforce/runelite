@@ -22,43 +22,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.client.plugins.tileindicators;
+package net.runelite.api;
 
-import java.awt.Color;
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-
-@ConfigGroup("tileindicators")
-public interface TileIndicatorsConfig extends Config
+/**
+ * Represents a doubly linked node cache.
+ */
+public interface NodeCache
 {
-	@ConfigItem(
-		keyName = "highlightDestinationColor",
-		name = "Color of current destination highlighting",
-		description = "Configures the highlight color of current destination"
-	)
-	default Color highlightDestinationColor()
-	{
-		return Color.GRAY;
-	}
-
-	@ConfigItem(
-		keyName = "highlightDestinationTile",
-		name = "Highlight destination tile",
-		description = "Highlights tile player is walking to"
-	)
-	default boolean highlightDestinationTile()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "highlightHoveredTile",
-		name = "Highlight hovered tile",
-		description = "Highlights tile player is hovering with mouse"
-	)
-	default boolean highlightHoveredTile()
-	{
-		return false;
-	}
+	/**
+	 * Resets cache.
+	 */
+	void reset();
 }

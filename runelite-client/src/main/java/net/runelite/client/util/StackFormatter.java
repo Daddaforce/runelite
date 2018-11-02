@@ -100,7 +100,7 @@ public class StackFormatter
 		String formattedString = NUMBER_FORMATTER.format((double) quantity / divideBy);
 
 		// strip down any digits past the 4 first
-		formattedString = (formattedString.length() > 4 ? formattedString.substring(0, 4) : formattedString);
+		formattedString = (formattedString.length() > 5 ? formattedString.substring(0, 5) : formattedString);
 
 		// make sure the last character is not a "."
 		return (formattedString.endsWith(".") ? formattedString.substring(0, 3) : formattedString) + suffix;

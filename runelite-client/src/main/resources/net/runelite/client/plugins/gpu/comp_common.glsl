@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2018, Adam <Adam@sigterm.info>
- * Copyright (c) 2018, Tomas Slusny <slusnucky@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,62 +22,57 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.http.service.updatecheck;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import net.runelite.http.api.RuneLiteAPI;
-import okhttp3.Request;
-import okhttp3.Response;
+ #define PI 3.1415926535897932384626433832795f
+ #define UNIT PI / 1024.0f
 
-class ClientConfigLoader
-{
-	private static final String CONFIG_URL = "http://oldschool.runescape.com/jav_config.ws";
+ layout(std140) uniform uniforms {
+   int cameraYaw;
+   int cameraPitch;
+   int centerX;
+   int centerY;
+   int zoom;
+   int cameraX;
+   int cameraY;
+   int cameraZ;
+   ivec2 sinCosTable[2048];
+ };
 
-	static RSConfig fetch() throws IOException
-	{
-		final Request request = new Request.Builder()
-			.url(CONFIG_URL)
-			.build();
+ struct modelinfo {
+   int offset;   // offset into buffer
+   int uvOffset; // offset into uv buffer
+   int length;   // length in faces
+   int idx;      // write idx in target buffer
+   int flags;    // radius, orientation
+   int x;        // scene position x
+   int y;        // scene position y
+   int z;        // scene position z
+ };
 
-		final RSConfig config = new RSConfig();
+ layout(std430, binding = 0) readonly buffer modelbuffer_in {
+   modelinfo ol[];
+ };
 
-		try (final Response response = RuneLiteAPI.CLIENT.newCall(request).execute(); final BufferedReader in = new BufferedReader(
-			new InputStreamReader(response.body().byteStream())))
-		{
-			String str;
+ layout(std430, binding = 1) readonly buffer vertexbuffer_in {
+   ivec4 vb[];
+ };
 
-			while ((str = in.readLine()) != null)
-			{
-				int idx = str.indexOf('=');
+ layout(std430, binding = 2) readonly buffer tempvertexbuffer_in {
+   ivec4 tempvb[];
+ };
 
-				if (idx == -1)
-				{
-					continue;
-				}
+ layout(std430, binding = 3) writeonly buffer vertex_out {
+   ivec4 vout[];
+ };
 
-				String s = str.substring(0, idx);
+ layout(std430, binding = 4) writeonly buffer uv_out {
+   vec4 uvout[];
+ };
 
-				switch (s)
-				{
-					case "param":
-						str = str.substring(idx + 1);
-						idx = str.indexOf('=');
-						s = str.substring(0, idx);
+ layout(std430, binding = 5) readonly buffer uvbuffer_in {
+   vec4 uv[];
+ };
 
-						config.getAppletProperties().put(s, str.substring(idx + 1));
-						break;
-					case "msg":
-						// ignore
-						break;
-					default:
-						config.getClassLoaderProperties().put(s, str.substring(idx + 1));
-						break;
-				}
-			}
-		}
-
-		return config;
-	}
-}
+ layout(std430, binding = 6) readonly buffer tempuvbuffer_in {
+   vec4 tempuv[];
+ };
